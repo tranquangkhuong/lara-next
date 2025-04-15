@@ -15,6 +15,8 @@ build:
 	docker compose exec lara_next_fe pnpm build
 start:
 	docker compose exec lara_next_fe pnpm start
+lint:
+	docker compose exec lara_next_fe pnpm lint
 
 warmup:
 	curl -I http://localhost:3000
