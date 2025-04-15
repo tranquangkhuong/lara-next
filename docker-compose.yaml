@@ -1,0 +1,69 @@
+services:
+  lara_next_nginx:
+    image: nginx:alpine-slim
+    container_name: lara_next_nginx
+    restart: unless-stopped
+    volumes:
+      - ./be:/var/www/html
+      - ./docker/nginx:/etc/nginx/conf.d
+      - ./logs/nginx:/var/log/nginx
+    ports:
+      - 8000:80
+    depends_on:
+      - lara_next_be
+    networks:
+      - lara_next_network
+
+  lara_next_be:
+    image: lara_next_be
+    container_name: lara_next_be
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: ./docker/be/Dockerfile
+    environment:
+      - APP_ENV=${APP_ENV:-production}
+    volumes:
+      - ./be:/var/www/html
+      - shared_files:/var/www/files
+    env_file:
+      - ./be/.env
+    healthcheck:
+      test: ["CMD", "php", "artisan", "health:check"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - lara_next_network
+
+  lara_next_fe:
+    image: lara_next_fe
+    container_name: lara_next_fe
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: ./docker/fe/Dockerfile
+    environment:
+      - APP_ENV=${APP_ENV:-production}
+    volumes:
+      - ./fe:/app
+      - shared_files:/var/www/files:ro
+    ports:
+      - 3000:3000
+    command: sh -c "if [ ! -d \"node_modules\" ]; then pnpm install --frozen-lockfile; fi && if [ \"$$APP_ENV\" = \"production\" ]; then pnpm build && pnpm start; else pnpm dev; fi"
+    networks:
+      - lara_next_network
+
+volumes:
+  shared_files:
+    name: shared_files
+    driver: local
+    driver_opts:
+      type: none
+      device: ${SHARED_FILE_PATH}
+      o: bind
+
+networks:
+  lara_next_network:
+    driver: bridge
