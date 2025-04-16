@@ -1,3 +1,6 @@
+backend:=lara_next_be
+frontend:=lara_next_fe
+
 up:
 	docker compose up -d
 stop:
@@ -6,18 +9,26 @@ down:
 	docker compose down
 down-rmi:
 	docker compose down --rmi local
+down-volumes:
+	docker compose down -v
 
 install:
-	docker compose exec lara_next_fe pnpm install --frozen-lockfile
+	cp .env.example .env
+	cp be/.env.example be/.env
+	cp fe/.env.example fe/.env
+	docker compose exec $(backend) composer install
+	docker compose exec $(backend) php artisan key:generate
+	docker compose exec $(frontend) pnpm install --frozen-lockfile
+create-dir:
+	mkdir files logs
 dev:
-	docker compose exec lara_next_fe pnpm dev
+	docker compose exec $(frontend) pnpm dev
 build:
-	docker compose exec lara_next_fe pnpm build
+	docker compose exec $(frontend) pnpm build
 start:
-	docker compose exec lara_next_fe pnpm start
+	docker compose exec $(frontend) pnpm start
 lint:
-	docker compose exec lara_next_fe pnpm lint
+	docker compose exec $(frontend) pnpm lint
 
 warmup:
 	curl -I http://localhost:3000
-#	curl http://localhost:3000 > /dev/null 2>&1 || true

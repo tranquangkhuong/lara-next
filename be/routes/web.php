@@ -7,6 +7,12 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+Route::get('/api/test', function () {
+    return response()->json([
+        'message' => 'Hello, world!'
+    ]);
+});
+
 Route::get('files/{any}', function ($any) {
     $file = Storage::disk('files')->get($any);
     if (!$file) abort(404);
